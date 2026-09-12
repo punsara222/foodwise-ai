@@ -6,8 +6,10 @@ Run locally with:
 (run from the foodwise-ai/ project root, not from inside orchestrator/)
 """
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from importlib import import_module
+
+JSONResponse = import_module("fastapi.responses").JSONResponse
+CORSMiddleware = import_module("fastapi.middleware.cors").CORSMiddleware
 
 from .config import settings
 from .routers import health, query
