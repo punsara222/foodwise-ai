@@ -1,4 +1,7 @@
 import re
+from fastapi import FastAPI
+from pydantic import BaseModel
+
 
 def extract_constraints(user_query: str) -> dict:
     query_lower = user_query.lower()
@@ -51,7 +54,6 @@ def extract_constraints(user_query: str) -> dict:
     if "heart-healthy" in query_lower or "heart healthy" in query_lower:
         constraints["health_flag"] = "heart-healthy"
 
-    # --- Fitness/gym-related goals ---
     if "bulk" in query_lower or "bulking" in query_lower or "muscle gain" in query_lower or "build muscle" in query_lower:
         constraints["fitness_goal"] = "bulking"
         constraints["min_protein"] = "high"
@@ -72,6 +74,21 @@ def extract_constraints(user_query: str) -> dict:
         constraints["max_fat"] = "low"
 
     return constraints
+
+
+# --- FastAPI setup (module-level, not inside the test loop) ---
+app = FastAPI()
+
+class QueryRequest(BaseModel):
+    query: str
+
+@app.post("/understand")
+def understand_query(request: QueryRequest):
+    constraints = extract_constraints(request.query)
+    return {
+        "original_query": request.query,
+        "constraints": constraints
+    }
 
 
 if __name__ == "__main__":
