@@ -1,5 +1,5 @@
 import re
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 
@@ -76,14 +76,40 @@ def extract_constraints(user_query: str) -> dict:
     return constraints
 
 
-# --- FastAPI setup (module-level, not inside the test loop) ---
+def validate_query(user_query: str) -> tuple[bool, str]:
+    """
+    Basic input validation before processing.
+    Returns (is_valid, error_message)
+    """
+    if not user_query or not user_query.strip():
+        return False, "Query cannot be empty"
+
+    if len(user_query) > 500:
+        return False, "Query is too long (max 500 characters)"
+
+    suspicious_patterns = ["ignore previous", "system prompt", "<script"]
+    query_lower = user_query.lower()
+    for pattern in suspicious_patterns:
+        if pattern in query_lower:
+            return False, "Query contains disallowed content"
+
+    return True, ""
+
+
+# --- FastAPI setup ---
 app = FastAPI()
+
 
 class QueryRequest(BaseModel):
     query: str
 
+
 @app.post("/understand")
 def understand_query(request: QueryRequest):
+    is_valid, error_message = validate_query(request.query)
+    if not is_valid:
+        raise HTTPException(status_code=400, detail=error_message)
+
     constraints = extract_constraints(request.query)
     return {
         "original_query": request.query,
