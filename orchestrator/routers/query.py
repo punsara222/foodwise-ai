@@ -30,6 +30,13 @@ async def handle_query(payload: UserQueryRequest) -> FinalResponse:
     # Step 1: NLP parsing (Punsara's agent)
     constraints = await query_agent_client.parse_query(clean_query)
 
+     # Safety net: guarantee retrieval_agent always gets real text to run
+        # TF-IDF/cosine similarity against, even if query_agent's response
+        # left raw_query empty (or omitted it entirely). This does not
+        # override a value query_agent already set.
+    if not constraints.raw_query:
+            constraints.raw_query = clean_query
+
     # Step 2: Retrieval (Nithya's agent)
     retrieval = await retrieval_agent_client.search(constraints)
 

@@ -103,6 +103,30 @@ def test_full_pipeline_merges_results_correctly(mock_parse, mock_search, mock_an
     assert "disclaimer" in data
 
 
+@patch("orchestrator.routers.query.retrieval_agent_client.search", new_callable=AsyncMock)
+@patch("orchestrator.routers.query.query_agent_client.parse_query", new_callable=AsyncMock)
+def test_raw_query_always_reaches_retrieval_agent(mock_parse, mock_search):
+    """
+    Regression test for the bug Nithya flagged: even if query_agent's
+    ParsedConstraints comes back with keywords=[] and raw_query unset, the
+    orchestrator must still forward the real query text to retrieval_agent
+    so TF-IDF/cosine similarity has something to work with.
+    """
+    mock_parse.return_value = ParsedConstraints(
+        intent="recommend_recipe", keywords=[], raw_query=None
+    )
+    mock_search.return_value = RetrievalResponse(results=[])
+
+    client.post(
+        "/api/v1/query",
+        json={"query": "spicy vegan noodles"},
+        headers=AUTH_HEADERS,
+    )
+
+    forwarded_constraints = mock_search.call_args.args[0]
+    assert forwarded_constraints.raw_query == "spicy vegan noodles"
+
+
 @patch("orchestrator.routers.query.query_agent_client.parse_query", new_callable=AsyncMock)
 def test_upstream_agent_unreachable_returns_503(mock_parse):
     mock_parse.side_effect = ConnectionError("query_agent is unreachable at http://localhost:8001")

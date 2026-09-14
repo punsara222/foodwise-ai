@@ -49,7 +49,7 @@ class ParsedConstraints(BaseModel):
     meal_type: Optional[str] = None      # e.g. "dinner", "breakfast"
     keywords: List[str] = []
     target_recipe_name: Optional[str] = None  # used when intent == review_lookup
-
+    raw_query: Optional[str] = None
 
 # ---------------------------------------------------------------------------
 # 3) Contract with retrieval_agent (Nithya)

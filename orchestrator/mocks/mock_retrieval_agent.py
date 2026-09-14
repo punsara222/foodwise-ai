@@ -26,6 +26,29 @@ class ConstraintsIn(BaseModel):
     meal_type: Optional[str] = None
     keywords: List[str] = []
     target_recipe_name: Optional[str] = None
+    # Always populated by the orchestrator (see routers/query.py), even if
+    # query_agent leaves it blank - this is the real text to vectorize.
+    raw_query: Optional[str] = None
+
+
+def _text_overlap_score(recipe: dict, constraints: "ConstraintsIn") -> float:
+    """
+    Crude placeholder for real TF-IDF + cosine similarity: scores a recipe
+    by how many query words appear in its title/ingredients. Nithya's real
+    retrieval_agent should replace this with an actual TF-IDF vectorizer
+    fit over the recipe corpus (title + ingredients + description) and
+    cosine similarity against a vector built from `raw_query` (falling
+    back to `keywords` if she wants an extra signal on top).
+    """
+    query_text = (constraints.raw_query or " ".join(constraints.keywords) or "").lower()
+    if not query_text:
+        return 0.0
+    query_words = set(query_text.split())
+    recipe_words = set(recipe["title"].lower().split())
+    for ingredient in recipe["ingredients"]:
+        recipe_words.update(ingredient.lower().split())
+    overlap = query_words & recipe_words
+    return min(len(overlap) * 0.1, 0.3)
 
 
 @app.post("/search")
@@ -44,11 +67,12 @@ def search(constraints: ConstraintsIn):
             score += 0.15
         if constraints.min_protein_g and recipe["protein_g"] >= constraints.min_protein_g:
             score += 0.15
+        score += _text_overlap_score(recipe, constraints)
 
         results.append({**recipe, "score": round(min(score, 1.0), 3)})
 
     results.sort(key=lambda r: r["score"], reverse=True)
-    return {"results": results, "query_echo": None}
+    return {"results": results, "query_echo": constraints.raw_query}
 
 
 @app.get("/health")
