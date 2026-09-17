@@ -22,6 +22,7 @@ class ParsedConstraints(BaseModel):
     meal_type: Optional[str] = None
     keywords: List[str] = []
     target_recipe_name: Optional[str] = None
+    raw_query: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------

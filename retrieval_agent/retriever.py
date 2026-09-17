@@ -23,7 +23,10 @@ tfidf_matrix = vectorizer.fit_transform(df["combined_text"].tolist())
 
 
 def query_text_from(constraints) -> str:
-    """Builds the text to rank against from whatever fields carry real words."""
+    """Builds the text to rank against — prefers the raw query text if available."""
+    if constraints.raw_query:
+        return constraints.raw_query
+
     parts = list(constraints.keywords)
     if constraints.meal_type:
         parts.append(constraints.meal_type)
