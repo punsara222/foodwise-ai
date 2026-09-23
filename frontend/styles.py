@@ -70,10 +70,14 @@ h1, h2, h3 { font-family: 'Quicksand', sans-serif; }
 
 /* Example chips */
 /* Streamlit's default button CSS clips long labels with overflow:hidden +
-   ellipsis. We override every layer (button, its inner <div>/<p> wrapper)
-   so the full example text always shows, and let the button grow/wrap
-   instead of truncating. */
-.stButton > button {
+   ellipsis, and adds a title="" attribute (that's the hover tooltip you
+   were seeing) when it detects the clip. We override every layer —
+   button, and EVERY descendant regardless of depth or Streamlit version —
+   using data-testid selectors (stable across versions) plus a universal
+   "*" selector, so nothing sneaks past. */
+.stButton > button,
+[data-testid="stButton"] button,
+[data-testid^="stBaseButton"] {
     border-radius: 999px !important;
     border: 1px solid #eadfce !important;
     background: #ffffffcc !important;
@@ -88,21 +92,29 @@ h1, h2, h3 { font-family: 'Quicksand', sans-serif; }
     overflow: visible !important;
     text-overflow: unset !important;
     line-height: 1.3 !important;
-    word-break: normal;
+    word-break: break-word !important;
 }
-.stButton > button:hover {
+.stButton > button:hover,
+[data-testid="stButton"] button:hover,
+[data-testid^="stBaseButton"]:hover {
     border-color: var(--tomato) !important;
     color: var(--tomato) !important;
     transform: translateY(-1px);
 }
-/* Streamlit wraps the label text in a nested div/p/span — these also need
-   the same overrides or they clip independently of the button itself. */
-.stButton > button div,
-.stButton > button p,
-.stButton > button span {
+/* Catch every nested wrapper (div/p/span/etc.) inside the button, at any
+   depth, so the label text can never be clipped independently of the
+   button's own override above. */
+.stButton > button *,
+[data-testid="stButton"] button *,
+[data-testid^="stBaseButton"] *,
+[data-testid="stMarkdownContainer"] p {
     white-space: normal !important;
     overflow: visible !important;
     text-overflow: unset !important;
+}
+/* Keep all four chips in a row the same height even after wrapping. */
+[data-testid="stHorizontalBlock"] {
+    align-items: stretch !important;
 }
 
 /* Primary search button */
