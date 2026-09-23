@@ -28,7 +28,7 @@ login file instead, or add a simple guard here, e.g.:
 import streamlit as st
 
 from api_client import OrchestratorError, check_health, get_recommendations
-from styles import CSS
+from styles import get_css
 from ui_components import (
     render_error,
     render_example_chips,
@@ -41,7 +41,7 @@ st.set_page_config(page_title="FoodWise AI", page_icon="🥗", layout="centered"
 
 
 def render_app():
-    st.markdown(CSS, unsafe_allow_html=True)
+    st.markdown(get_css(), unsafe_allow_html=True)
 
     if "query_input" not in st.session_state:
         st.session_state.query_input = ""
@@ -50,42 +50,49 @@ def render_app():
     if "error" not in st.session_state:
         st.session_state.error = None
 
-    render_hero()
-    render_status_pill(check_health())
+    # Everything from here down renders inside the floating light card.
+    # key="fw_page_card" makes Streamlit add a stable class
+    # (.st-key-fw_page_card) to this container's real DOM node, which
+    # styles.py targets — every widget created inside this `with` block
+    # becomes an actual child of that node, unlike the earlier raw-HTML
+    # div hack.
+    with st.container(key="fw_page_card"):
+        render_hero()
+        render_status_pill(check_health())
 
-    clicked_example = render_example_chips()
-    if clicked_example:
-        st.session_state.query_input = clicked_example
-        st.session_state.results = None
-        st.session_state.error = None
-
-    with st.form(key="search_form", clear_on_submit=False):
-        query = st.text_input(
-            "What are you in the mood for?",
-            key="query_input",
-            placeholder="e.g. high-protein dinner under 500 calories, no dairy",
-            label_visibility="collapsed",
-        )
-        submitted = st.form_submit_button("🔍 Find recipes", use_container_width=True)
-
-    if submitted:
-        if not query or not query.strip():
-            st.session_state.error = "Type what you're craving first — a word or two is fine."
+        clicked_example = render_example_chips()
+        if clicked_example:
+            st.session_state.query_input = clicked_example
             st.session_state.results = None
-        else:
-            with st.spinner("Asking the agents..."):
-                try:
-                    st.session_state.results = get_recommendations(query.strip())
-                    st.session_state.error = None
-                except OrchestratorError as exc:
-                    st.session_state.error = str(exc)
-                    st.session_state.results = None
+            st.session_state.error = None
 
-    if st.session_state.error:
-        render_error(st.session_state.error)
+        with st.form(key="search_form", clear_on_submit=False):
+            query = st.text_input(
+                "What are you in the mood for?",
+                key="query_input",
+                placeholder="e.g. high-protein dinner under 500 calories, no dairy",
+                label_visibility="collapsed",
+            )
+            submitted = st.form_submit_button("🔍 Find recipes", use_container_width=True)
 
-    if st.session_state.results:
-        render_results(st.session_state.results)
+        if submitted:
+            if not query or not query.strip():
+                st.session_state.error = "Type what you're craving first — a word or two is fine."
+                st.session_state.results = None
+            else:
+                with st.spinner("Asking the agents..."):
+                    try:
+                        st.session_state.results = get_recommendations(query.strip())
+                        st.session_state.error = None
+                    except OrchestratorError as exc:
+                        st.session_state.error = str(exc)
+                        st.session_state.results = None
+
+        if st.session_state.error:
+            render_error(st.session_state.error)
+
+        if st.session_state.results:
+            render_results(st.session_state.results)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,11 @@
+[theme]
+# Pin the app to light mode for everyone, regardless of their OS/browser
+# dark-mode preference. Without this, Streamlit's default "Use system
+# setting" theme can flip individual visitors into dark mode, which broke
+# text-input contrast against our custom white input background.
+base = "light"
+backgroundColor = "#FFF8EE"
+secondaryBackgroundColor = "#FBEEDB"
+textColor = "#6B3F1D"
+primaryColor = "#E4572E"
+font = "sans serif"

@@ -12,7 +12,6 @@ EXAMPLE_QUERIES = [
     "🍗 High-protein dinner under 500 calories, no dairy",
     "🌱 Vegan breakfast, gluten-free",
     "🌶️ Spicy Thai chicken curry",
-    "💬 What do people say about this recipe's texture?",
 ]
 
 
@@ -21,7 +20,7 @@ def render_hero():
         """
         <div class="fw-hero">
             <h1>🥗 Food<span class="fw-accent">Wise</span> AI</h1>
-            <p>Tell us what you're craving — our agents handle the rest.</p>
+            <p>Craving something delicious? Tell us what you like, what you need, and what your goals are - our AI agents work together to find the perfect meal for you.</p>
         </div>
         """,
         unsafe_allow_html=True,
