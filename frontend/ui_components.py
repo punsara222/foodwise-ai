@@ -88,6 +88,15 @@ def _sentiment_badge(label: str) -> str:
     icon = {"positive": "😊", "neutral": "😐", "negative": "😕"}.get(label, "")
     return f'<span class="fw-sentiment fw-sentiment-{label}">{icon} {label.title()}</span>'
 
+def _aspect_tags(aspects: dict) -> str:
+    if not aspects:
+        return ""
+    icon = {"positive": "✅", "negative": "❌", "mixed": "➖"}
+    tags = []
+    for name, sentiment in aspects.items():
+        emoji = icon.get(sentiment, "")
+        tags.append(f'<span class="fw-pill fw-pill-meta">{emoji} {html.escape(name)}: {html.escape(sentiment)}</span>')
+    return f'<div class="fw-aspects">{"".join(tags)}</div>'
 
 def render_recipe_card(rec: dict):
     title = html.escape(rec.get("title", "Untitled recipe"))
@@ -102,6 +111,7 @@ def render_recipe_card(rec: dict):
     why = html.escape(rec.get("why_recommended", ""))
     review_summary = rec.get("review_summary")
     sentiment_html = _sentiment_badge(rec.get("sentiment_label", ""))
+    aspects_html = _aspect_tags(rec.get("aspects", {}))
 
     review_html = ""
     if review_summary:
@@ -125,6 +135,8 @@ def render_recipe_card(rec: dict):
             <div class="fw-why">💡 {why}</div>
             {review_html}
             {sentiment_html}
+            {aspects_html}
+
         </div>
         """,
         unsafe_allow_html=True,

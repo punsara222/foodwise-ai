@@ -98,6 +98,7 @@ class FinalRecommendation(BaseModel):
     protein_g: Optional[int] = None
     review_summary: Optional[str] = None
     sentiment_label: Optional[str] = None
+    aspects: Dict[str, str] = {}
 
 
 class FinalResponse(BaseModel):

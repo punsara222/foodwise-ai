@@ -59,6 +59,8 @@ def merge_results(
                 protein_g=recipe.protein_g,
                 review_summary=insight.summary if insight else None,
                 sentiment_label=insight.sentiment_label if insight else None,
+                aspects=insight.aspects if insight else {},
+
             )
         )
     return final
