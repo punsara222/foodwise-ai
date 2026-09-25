@@ -19,7 +19,7 @@ def render_hero():
     st.markdown(
         """
         <div class="fw-hero">
-            <h1>🥗 Food<span class="fw-accent">Wise</span> AI</h1>
+            <h1> Food<span class="fw-accent">Wise</span> AI</h1>
             <p>Craving something delicious? Tell us what you like, what you need, and what your goals are - our AI agents work together to find the perfect meal for you.</p>
         </div>
         """,
