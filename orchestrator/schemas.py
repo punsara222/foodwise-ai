@@ -49,7 +49,19 @@ class ParsedConstraints(BaseModel):
     meal_type: Optional[str] = None      # e.g. "dinner", "breakfast"
     keywords: List[str] = []
     target_recipe_name: Optional[str] = None  # used when intent == review_lookup
+
+    # The original, cleaned user text (e.g. "high-protein dinner under 500
+    # calories, no dairy"). This is what retrieval_agent's TF-IDF / cosine
+    # similarity step should vectorize and rank against.
+    #
+    # query_agent (Punsara) is welcome to populate this herself, but it is
+    # NOT required to: the orchestrator always fills it in from the raw
+    # user query before forwarding to retrieval_agent (see
+    # routers/query.py), so retrieval_agent can rely on it being non-empty
+    # regardless of what query_agent sends. `keywords` above still carries
+    # any structured terms query_agent extracts, if useful in addition.
     raw_query: Optional[str] = None
+
 
 # ---------------------------------------------------------------------------
 # 3) Contract with retrieval_agent (Nithya)
@@ -63,6 +75,8 @@ class RetrievedRecipe(BaseModel):
     protein_g: Optional[int] = None
     diet_tags: List[str] = []
     ingredients: List[str] = []
+    instructions: List[str] = []
+    prep_time_minutes: Optional[int] = None
 
 
 class RetrievalResponse(BaseModel):
@@ -99,6 +113,9 @@ class FinalRecommendation(BaseModel):
     review_summary: Optional[str] = None
     sentiment_label: Optional[str] = None
     aspects: Dict[str, str] = {}
+    ingredients: List[str] = []
+    instructions: List[str] = []
+    prep_time_minutes: Optional[int] = None
 
 
 class FinalResponse(BaseModel):
