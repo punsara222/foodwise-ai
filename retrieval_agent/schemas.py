@@ -36,6 +36,8 @@ class RetrievedRecipe(BaseModel):
     protein_g: Optional[int] = None
     diet_tags: List[str] = []
     ingredients: List[str] = []
+    instructions: List[str] = []
+    prep_time_minutes: Optional[int] = None
 
 
 class RetrievalResponse(BaseModel):
