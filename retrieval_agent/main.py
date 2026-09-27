@@ -12,11 +12,26 @@ def parse_step_list(raw_value) -> list[str]:
     """Handles both c("step1", "step2") R-vector format and plain comma-separated text."""
     if pd.isna(raw_value) or not str(raw_value).strip():
         return []
-    text = str(raw_value)
+    text = str(raw_value).strip()
+
     quoted = re.findall(r'"([^"]+)"', text)
     if quoted:
         return quoted
-    return [s.strip() for s in text.split(", ") if s.strip() and s.strip().lower() != "nan"]
+
+    # Steps were originally joined with ", " and each step already ends in
+    # a period — so the real boundary between steps is ".," not just ",".
+    # Splitting on plain ", " cuts through commas *inside* a step (e.g.
+    # "blend butter, brown sugar and flour" becomes two fake steps).
+    parts = re.split(r'\.,\s*', text)
+    steps = []
+    for p in parts:
+        p = p.strip()
+        if not p or p.lower() == "nan":
+            continue
+        if not p.endswith((".", "!", "?")):
+            p += "."
+        steps.append(p)
+    return steps
 
 
 @app.post("/search", response_model=RetrievalResponse)

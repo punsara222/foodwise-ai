@@ -372,6 +372,55 @@ def get_css(bg_image_path: Path = DEFAULT_BG_IMAGE) -> str:
     }}
     .fw-empty .fw-emoji {{ font-size: 2.4rem; }}
 
+    /* Recipe detail page */
+    .fw-detail-header {{
+        margin-bottom: 1.5rem;
+    }}
+    .fw-detail-title {{
+        font-family: 'Quicksand', sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--brown);
+        margin-bottom: 0.5rem;
+    }}
+    .fw-detail-macros {{
+        margin-bottom: 0.75rem;
+    }}
+    .fw-section-title {{
+        font-family: 'Quicksand', sans-serif;
+        color: var(--brown);
+        font-size: 1.15rem;
+        margin: 0.5rem 0 0.75rem 0;
+    }}
+    .fw-ingredient-list {{
+        padding-left: 1.2rem;
+        margin: 0;
+    }}
+    .fw-ingredient-list li {{
+        margin-bottom: 0.5rem;
+        color: var(--brown);
+        line-height: 1.4;
+    }}
+    .fw-step-list {{
+        padding-left: 1.3rem;
+        margin: 0;
+    }}
+    .fw-step-list li {{
+        margin-bottom: 0.85rem;
+        color: var(--brown);
+        line-height: 1.5;
+    }}
+    .fw-muted {{
+        color: var(--brown-soft);
+        font-style: italic;
+        font-size: 0.9rem;
+    }}
+    .fw-review-block {{
+        background: #FBF3E6;
+        border-radius: 12px;
+        padding: 0.9rem 1.1rem;
+        margin-bottom: 1rem;
+    }}
     footer, #MainMenu {{ visibility: hidden; }}
     </style>
     """

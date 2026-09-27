@@ -19,7 +19,7 @@ def render_hero():
     st.markdown(
         """
         <div class="fw-hero">
-            <h1> Food<span class="fw-accent">Wise</span> AI</h1>
+            <h1> Food<span class="fw-accent">Wise </span> AI 🥗</h1>
             <p>Craving something delicious? Tell us what you like, what you need, and what your goals are - our AI agents work together to find the perfect meal for you.</p>
         </div>
         """,
@@ -106,6 +106,8 @@ def render_recipe_card(rec: dict):
         macros_bits.append(f'{rec["calories"]} cal')
     if rec.get("protein_g") is not None:
         macros_bits.append(f'{rec["protein_g"]}g protein')
+    if rec.get("prep_time_minutes") is not None:
+        macros_bits.append(f'⏱ {rec["prep_time_minutes"]} min')
     macros = " · ".join(macros_bits)
 
     why = html.escape(rec.get("why_recommended", ""))
@@ -142,6 +144,15 @@ def render_recipe_card(rec: dict):
         unsafe_allow_html=True,
     )
 
+    has_details = bool(rec.get("instructions")) or bool(rec.get("ingredients"))
+    if has_details:
+        return st.button(
+            " View full recipe →",
+            key=f"view_recipe_{rec.get('recipe_id')}",
+            use_container_width=True,
+        )
+    return False
+
 
 def render_results(data: dict):
     constraints = data.get("parsed_constraints", {})
@@ -154,12 +165,15 @@ def render_results(data: dict):
             "🍽️", "No recipes matched that exactly",
             "Try loosening a constraint — e.g. a higher calorie limit or fewer excluded ingredients.",
         )
-        return
+        return None
 
+    clicked_recipe = None
     for rec in recommendations:
-        render_recipe_card(rec)
+        if render_recipe_card(rec):
+            clicked_recipe = rec
 
     render_disclaimer(data.get("disclaimer", ""))
+    return clicked_recipe
 
 
 def render_empty_state(emoji: str, title: str, subtitle: str = ""):
@@ -183,3 +197,62 @@ def render_disclaimer(text: str):
     if not text:
         return
     st.markdown(f'<div class="fw-disclaimer">ℹ️ {html.escape(text)}</div>', unsafe_allow_html=True)
+
+
+def render_recipe_detail(rec: dict):
+    """Full recipe page: everything about one recommendation — ingredients,
+    numbered steps, prep time, review insight. Shown after a card's
+    'View full recipe' button is clicked."""
+    title = html.escape(rec.get("title", "Untitled recipe"))
+
+    macros_bits = []
+    if rec.get("calories") is not None:
+        macros_bits.append(f'🔥 {rec["calories"]} cal')
+    if rec.get("protein_g") is not None:
+        macros_bits.append(f'💪 {rec["protein_g"]}g protein')
+    if rec.get("prep_time_minutes") is not None:
+        macros_bits.append(f'⏱ {rec["prep_time_minutes"]} min prep')
+    macros_html = "".join(f'<span class="fw-pill fw-pill-meta">{b}</span>' for b in macros_bits)
+
+    st.markdown(
+        f"""
+        <div class="fw-detail-header">
+            <h1 class="fw-detail-title">{title}</h1>
+            <div class="fw-detail-macros">{macros_html}</div>
+            <div class="fw-why">💡 {html.escape(rec.get("why_recommended", ""))}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    ingredients = rec.get("ingredients", [])
+    instructions = rec.get("instructions", [])
+
+    col_ingredients, col_steps = st.columns([1, 1.4], gap="large")
+
+    with col_ingredients:
+        st.markdown('<h3 class="fw-section-title">🧺 Ingredients</h3>', unsafe_allow_html=True)
+        if ingredients:
+            items = "".join(f"<li>{html.escape(i)}</li>" for i in ingredients)
+            st.markdown(f'<ul class="fw-ingredient-list">{items}</ul>', unsafe_allow_html=True)
+        else:
+            st.markdown('<p class="fw-muted">No ingredient list available for this recipe.</p>', unsafe_allow_html=True)
+
+    with col_steps:
+        st.markdown('<h3 class="fw-section-title">👩‍🍳 Steps</h3>', unsafe_allow_html=True)
+        if instructions:
+            items = "".join(f"<li>{html.escape(s)}</li>" for s in instructions)
+            st.markdown(f'<ol class="fw-step-list">{items}</ol>', unsafe_allow_html=True)
+        else:
+            st.markdown('<p class="fw-muted">No step-by-step instructions available for this recipe.</p>', unsafe_allow_html=True)
+
+    review_summary = rec.get("review_summary")
+    sentiment_html = _sentiment_badge(rec.get("sentiment_label", ""))
+    aspects_html = _aspect_tags(rec.get("aspects", {}))
+    if review_summary or sentiment_html:
+        st.markdown('<h3 class="fw-section-title">💬 What people say</h3>', unsafe_allow_html=True)
+        review_html = f'<div class="fw-review">“{html.escape(review_summary)}”</div>' if review_summary else ""
+        st.markdown(
+            f'<div class="fw-review-block">{review_html}{sentiment_html}{aspects_html}</div>',
+            unsafe_allow_html=True,
+        )
