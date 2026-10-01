@@ -5,6 +5,7 @@ Run with:
     streamlit run frontend/login.py
 """
 import base64
+import html
 import os
 
 import jwt
@@ -102,21 +103,40 @@ def inject_background_css():
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
         }}
 
-        /* ---------- Logout bar (shown after login, over the same background) ---------- */
+        /* ---------- Logout pill (shown after login, over the same background) ----------
+           Just the name (no email) plus an avatar initial, styled as a
+           compact pill rather than a full-width bar — reads as a profile
+           chip instead of a system notice. */
         .logout-bar-wrapper {{
             background: rgba(20, 20, 24, 0.55);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border-radius: 12px;
-            padding: 10px 20px;
+            border-radius: 999px;
+            padding: 6px 20px 6px 6px;
             margin-bottom: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.65rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }}
+        .logout-avatar {{
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #E4572E, #F2825E);
+            color: #ffffff;
             display: flex;
             align-items: center;
-            height: 100%;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            flex-shrink: 0;
         }}
         .logout-bar-text {{
             color: #ffffff;
-            font-size: 0.9rem;
+            font-size: 0.92rem;
+            font-weight: 600;
         }}
         </style>
         """,
@@ -174,13 +194,16 @@ def show_logout_bar():
     inject_background_css()
 
     user = st.session_state["user"]
+    name = (user.get("name") or "User").strip()
+    initial = name[0].upper() if name else "U"
 
     col1, col2 = st.columns([5, 1])
     with col1:
         st.markdown(
-            f'<div class="logout-bar-wrapper"><span class="logout-bar-text">'
-            f'Logged in as <strong>{user["name"]}</strong> ({user["email"]})'
-            f'</span></div>',
+            f'<div class="logout-bar-wrapper">'
+            f'<div class="logout-avatar">{html.escape(initial)}</div>'
+            f'<span class="logout-bar-text">{html.escape(name)}</span>'
+            f'</div>',
             unsafe_allow_html=True,
         )
     with col2:

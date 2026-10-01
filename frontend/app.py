@@ -2,27 +2,23 @@
 frontend/app.py — FoodWise AI Streamlit frontend.
 
 Run with:
-    streamlit run frontend/app.py
+    streamlit run frontend/login.py      ← the real entrypoint, do this
 
 --------------------------------------------------------------------------
-LOGIN INTEGRATION (for whoever is building the login page):
+LOGIN INTEGRATION
 --------------------------------------------------------------------------
 This file exposes `render_app()`, which draws the whole search/results
-experience and assumes the user is already authenticated. Your login page
-should be the thing Streamlit runs first; once you've verified the user
-(and however you're tracking that — e.g. st.session_state["user"]), call:
+experience and assumes the user is already authenticated. login.py is the
+actual entrypoint: it checks st.session_state["user"] and only then calls
+render_app().
 
-    from frontend.app import render_app
-    render_app()
-
-If this file is run directly (as it is now, via the `if __name__` block
-at the bottom), it renders standalone with no login gate, so the rest of
-the team can preview/demo it before login is wired in. Once login is
-ready, either delete that bottom block and import render_app() from your
-login file instead, or add a simple guard here, e.g.:
-
-    if not st.session_state.get("user"):
-        st.stop()   # or st.switch_page("login.py")
+IMPORTANT: `streamlit run app.py` starts a brand-new Streamlit process
+with its OWN session state — login.py is never imported, so there is no
+login check to bypass, but there's also no st.session_state["user"] to
+ever be set. The `if __name__ == "__main__"` block below used to call
+render_app() unconditionally here, which meant anyone who ran (or was
+given a link to) app.py directly got straight into the app with no login
+at all. It now refuses to render and tells you to run login.py instead.
 --------------------------------------------------------------------------
 """
 import streamlit as st
@@ -115,4 +111,15 @@ def _render_detail_view():
 
 
 if __name__ == "__main__":
+    # See the module docstring: this file has no login check of its own
+    # (that's login.py's job). If this ever executes, app.py was run
+    # directly instead of through login.py, so there is deliberately no
+    # way in — refuse and point whoever did this at the right file.
+    if not st.session_state.get("user"):
+        st.error(
+            "🔒 This page isn't meant to be opened directly.\n\n"
+            "Run `streamlit run login.py` instead — that's the file with "
+            "the actual sign-in check."
+        )
+        st.stop()
     render_app()
