@@ -36,3 +36,29 @@
   handled separately by the orchestrator's `FinalResponse.disclaimer` field.
 - Because summaries are extractive (built only from real text), there's no
   risk of hallucinating a claim a reviewer never made.
+
+
+# Responsible AI — Orchestrator, Recommendation Agent, Security & Frontend (Patali)
+
+## Explainability
+* Every recommendation carries a `why_recommended` string built by the Recommendation Agent from the actual constraints that matched — e.g. *"410 cal fits your under-500-cal request; matches your vegan preference."* It's generated from real comparisons (`calories <= max_calories`, `diet_tags` intersection), never a static template.
+* The frontend surfaces the orchestrator's `parsed_constraints` as a visible **"Understood as:"** panel before showing results, so the user can see exactly what the system extracted from their query and catch a misunderstanding immediately, instead of only seeing a final answer with no visibility into the reasoning that produced it.
+
+## Transparency
+* The security layer (`verify_api_key`, `rate_limiter`, `sanitize_text`) is entirely rule-based — fixed, inspectable logic, not a learned model. The exact conditions that reject a request (wrong key, too many requests, a banned pattern) are documented in code and deterministic: the same input always produces the same outcome.
+* `match_score` (the raw retrieval number) and `why_recommended` (the human-readable reason) are both returned together in `FinalRecommendation`, so downstream consumers — the frontend, or anyone inspecting the API — see the precise score alongside the explanation, not one hiding the other.
+* The orchestrator never re-scores or re-ranks recipes using hidden logic of its own; `merge_results()` only reorders by the score `retrieval_agent` already computed, so the ranking a user sees traces directly back to retrieval, not an opaque second pass.
+
+## Fairness
+* `merge_results()` applies the exact same merge and explanation logic regardless of which `diet_tags`, `exclude_ingredients`, or constraints are set — there's no special-cased branch that favors one dietary profile's recipes over another's.
+* The Recommendation Agent only merges and explains what `retrieval_agent` and `review_agent` already returned — it doesn't independently filter, suppress, or boost any recipe based on its own judgment, keeping ranking decisions traceable to one place.
+
+## Privacy
+* The orchestrator is stateless per request — no user query, IP, or result is persisted to a database. Nothing about a search outlives that single request/response cycle.
+* `sanitize_text()` strips and HTML-escapes input before it's forwarded to any other agent or logged anywhere, so a malicious payload can't get silently stored or re-displayed downstream.
+* The frontend keeps results only in that browser session's in-memory state (`st.session_state`) — nothing is written to disk or a shared store, and it disappears when the session ends.
+
+## Misuse Prevention
+* `FinalResponse.disclaimer` is a hardcoded default field on the response schema itself, not something assembled conditionally — every single response carries it, so it's structurally impossible for a code path to accidentally omit it.
+* Input validation explicitly blocks prompt-injection-style phrases (e.g., *"ignore previous"*, *"system prompt"*) and SQL-injection-style patterns before a request reaches any downstream agent, preventing a malicious query from being used to manipulate the pipeline or extract unintended data.
+* Rate limiting (sliding-window, per IP) prevents automated abuse or bulk scraping of the recommendation pipeline, keeping the system usable as intended rather than as a free bulk data-extraction endpoint.
